@@ -7,10 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String @db.Text
 
-model Contact{
-  id Int @id @default(autoincrement())
-  waId String @unique
+  sessions Sessions[]
+
+  createdAt DateTime @default(now())
+}
+
+model Sessions {
+  id           Int    @id @default(autoincrement())
+  refreshToken String @unique @db.Text
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Contact {
+  id   Int     @id @default(autoincrement())
+  waId String  @unique
   name String?
 
   message Message[]
@@ -18,29 +36,29 @@ model Contact{
   createdAt DateTime @default(now())
 }
 
-model Message{
-  id Int @id @default(autoincrement())
+model Message {
+  id          Int    @id @default(autoincrement())
   waMessageId String @unique
 
-  contactId Int 
-  contact Contact @relation(fields:[contactId],references:[id])
+  contactId Int
+  contact   Contact @relation(fields: [contactId], references: [id])
 
-  type String
-  body String?
+  type     String
+  body     String?
   mimeType String?
 
   direction MessageDirection
-  status MessageStatus @default(RECEIVED)
+  status    MessageStatus    @default(RECEIVED)
 
   createdAt DateTime @default(now())
 }
 
-enum MessageDirection{
+enum MessageDirection {
   INCOMING
   OUTGOING
 }
 
-enum MessageStatus{
+enum MessageStatus {
   PROCESSED
   RECEIVED
   SENT
