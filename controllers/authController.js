@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 export const register = async (req, res) => {
     try {
@@ -25,11 +26,13 @@ export const register = async (req, res) => {
             });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await prisma.users.create({
             data: {
                 name,
                 email,
-                password,
+                password: hashedPassword,
             },
         });
         return res.status(201).json({
@@ -70,7 +73,9 @@ export const login = async (req, res) => {
             });
         }
 
-        if (user.password !== password) {
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid Password',
@@ -90,7 +95,7 @@ export const login = async (req, res) => {
             },
         }),
 
-        
+
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
