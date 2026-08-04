@@ -7,7 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
+model Users {
   id       Int    @id @default(autoincrement())
   name     String
   email    String @unique
@@ -23,7 +23,7 @@ model Sessions {
   refreshToken String @unique @db.Text
 
   user_id Int
-  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user    Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Contact {
