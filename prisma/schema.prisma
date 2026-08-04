@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model Contact{
+  id Int @id @default(autoincrement())
+  waId String @unique
+  name String?
+
+  message Message[]
+
+  createdAt DateTime @default(now())
+}
+
+model Message{
+  id Int @id @default(autoincrement())
+  waMessageId String @unique
+
+  contactId Int 
+  contact Contact @relation(fields:[contactId],references:[id])
+
+  type String
+  body String?
+  mimeType String?
+
+  direction MessageDirection
+  status MessageStatus @default(RECEIVED)
+
+  createdAt DateTime @default(now())
+}
+
+enum MessageDirection{
+  INCOMING
+  OUTGOING
+}
+
+enum MessageStatus{
+  PROCESSED
+  RECEIVED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
