@@ -81,7 +81,7 @@ export const login = async (req, res) => {
                 message: 'Invalid Password',
             });
         }
-        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN, {
+        const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN, {
             expiresIn: '1h',
         });
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN, {
