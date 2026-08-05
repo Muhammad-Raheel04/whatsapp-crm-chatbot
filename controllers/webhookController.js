@@ -39,6 +39,6 @@ export const handleWhatsAppWebhook = async (req, res) => {
             })
         }
     } catch (error) {
-        console.error("Webhook processing error:", err);
+        console.error("Webhook processing error:", error);
     }
 }
