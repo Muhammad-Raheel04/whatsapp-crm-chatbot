@@ -1,17 +1,6 @@
-import { prisma } from "../config/prisma.js"
-
-export const isAdmin = async(req, res, next) => {
+export const isAdmin = async (req, res, next) => {
     try {
-        const user = await prisma.users.findUnique({
-            where: {
-                id: req.user.id,
-            },
-            select: {
-                role: true,
-            }
-        })
-
-        if (user.role === 'ADMIN') {
+        if (req.user.role === 'ADMIN') {
             return next();
         }
 
