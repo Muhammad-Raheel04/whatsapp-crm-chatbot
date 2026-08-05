@@ -13,7 +13,6 @@ model Users {
   email    String @unique
   password String @db.Text
   
-  role UserRole @default(USER)
   sessions Sessions[]
 
   createdAt DateTime @default(now())
@@ -66,9 +65,4 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
-}
-
-enum UserRole {
-  USER
-  ADMIN
 }
