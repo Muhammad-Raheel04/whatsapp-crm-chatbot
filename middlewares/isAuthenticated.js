@@ -28,7 +28,8 @@ export const isAuthenticated = async (req, res, next) => {
             })
         }
         req.user = {
-            id: decoded.id
+            id: decoded.id,
+            role: decoded.role
         }
         next();
     } catch (error) {
