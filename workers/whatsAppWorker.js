@@ -1,48 +1,22 @@
 import { Worker } from "bullmq";
 import redisConnection from "../config/redis.js";
-import { prisma } from "../config/prisma.js";
+import { processIncomingMessage } from "../processors/incomingMessageProcessor.js";
+import { processStatusUpdate } from "../processors/statusUpdateProcessor.js";
 
 
 const whatsAppWorker = new Worker(
     "whatsapp-messages",
     async (job) => {
-        const { message, contact } = job.data;
-
-        let dbContact = null;
-        if (contact?.wa_id) {
-            dbContact = await prisma.contact.upsert({
-                where: { waId: contact.wa_id },
-                update: { name: contact.profile?.name },
-                create: { waId: contact.wa_id, name: contact.profile?.name },
-            })
+        switch (job.name) {
+            case "incoming-message":
+                await processIncomingMessage(job);
+                break;
+            case "message-status-update":
+                await processStatusUpdate(job);
+                break;
+            default:
+                console.log(`Unknown job ${job.name}`);
         }
-
-        const type = message.type;
-        let body = null;
-        let mimeType = null;
-
-        if (type === "text") {
-            body = message.text?.body;
-        }
-
-        await prisma.message.create({
-            data: {
-                waMessageId: message.id,
-                type,
-                body,
-                mimeType,
-                direction: "INCOMING",
-                status: "PROCESSED",
-
-                contact: {
-                    connect: {
-                        id: dbContact.id
-                    }
-                }
-            }
-        })
-
-        console.log(`Processed message ${message.id} from ${message.from}`)
     },
     {
         connection: redisConnection,
