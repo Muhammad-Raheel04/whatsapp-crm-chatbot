@@ -32,7 +32,7 @@ export const handleWhatsAppWebhook = async (req, res) => {
         }
 
         for (const message of change.messages) {
-            await whatsappQueue.add("incoming-messsage", {
+            await whatsappQueue.add("incoming-message", {
                 message,
                 contact: change.contacts?.[0],
                 metadata: change.metadata,
