@@ -22,7 +22,7 @@ export const sendWhatsAppMessage = async ({ to, message }) => {
 
         return response.data;
     }catch(error){
-        console.error("Graph Api Error",error)
+        console.error("Graph Api Error",error.message)
     }
    
 }
