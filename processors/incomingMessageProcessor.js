@@ -1,4 +1,6 @@
 import { prisma } from "../config/prisma.js";
+import { responseQueue } from "../queues/responseQueue.js";
+import { getDelay } from "../services/delayService.js";
 import { generateReply } from "../services/messageProcessor.js";
 import { sendWhatsAppMessage } from "../services/whatsAppService.js";
 
@@ -51,25 +53,33 @@ export const processIncomingMessage = async (job) => {
         });
 
         const reply = await generateReply(body, dbContact);
-        console.log(reply);
-        const response = await sendWhatsAppMessage({
-            to: message.from,
-            message: reply
 
-        });
-        console.log(response);
-        await prisma.message.create({
+        const delay = await getDelay();
 
+        const outgoingMessage = await prisma.message.create({
             data: {
-                waMessageId: response.messages[0].id,
                 type: "text",
                 body: reply,
                 direction: "OUTGOING",
-                status: "SENT",
+                status: "PENDING",
                 contactId: dbContact.id
             }
 
         });
+
+        await responseQueue.add(
+            "send-message",
+            {
+                to: message.from,
+                message: reply,
+                contactId: dbContact.id,
+                messageId:outgoingMessage.id
+            },
+            {
+                delay: delay * 1000
+            }
+        )
+
     } catch (error) {
         console.error("Incoming message processing failed", error.message)
     }
