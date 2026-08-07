@@ -66,3 +66,11 @@ enum MessageStatus {
   READ
   FAILED
 }
+
+model Settings{
+  id Int @id @default(autoincrement())
+  responseDelay Int @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
