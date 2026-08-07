@@ -1,22 +1,41 @@
-export const generateReply = async (text) => {
+import { openai } from "../config/openai.js";
+import { prisma } from "../config/prisma.js";
+
+export const generateReply = async (text, dbContact) => {
 
     const message = text.toLowerCase();
+    try {
+        const previousMessages = await prisma.message.findMany({
+            where: {
+                contactId: dbContact.id
+            },
+            orderBy: {
+                createdAt: "desc"
+            },
+            take: 10
+        })
 
+        const response = await openai.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are a WhatsApp assistant`
+                },
+                ...previousMessages.reverse().map(msg => ({
+                    role: msg.direction === 'INCOMING' ? "user" : "assistant",
+                    content: msg.body
+                })),
+                {
+                    role: "user",
+                    content: text,
+                },
+            ],
+            temperature: 0.7,
+        })
 
-    if(message.includes("hello") || message.includes("hi")){
-        return "Hello How can I help you today?";
+        return response.choices[0].message.content;
+    } catch (error) {
+        console.error("AI reply generation failed:", error.message);
     }
-
-
-    if(message.includes("price")){
-        return "Please tell me the product name and I will provide the price.";
-    }
-
-
-    if(message.includes("catalog")){
-        return "Here is our product catalog.";
-    }
-
-
-    return "Sorry, I didn't understand your message.";
 }
