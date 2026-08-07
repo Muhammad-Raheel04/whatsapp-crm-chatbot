@@ -50,7 +50,7 @@ export const processIncomingMessage = async (job) => {
 
         });
 
-        const reply = await generateReply(body);
+        const reply = await generateReply(body, dbContact);
         console.log(reply);
         const response = await sendWhatsAppMessage({
             to: message.from,
@@ -71,6 +71,6 @@ export const processIncomingMessage = async (job) => {
 
         });
     } catch (error) {
-        console.error("Incoming message processing failed", error)
+        console.error("Incoming message processing failed", error.message)
     }
 };
