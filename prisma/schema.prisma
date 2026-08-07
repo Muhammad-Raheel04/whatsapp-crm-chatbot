@@ -68,7 +68,7 @@ enum MessageStatus {
 }
 
 model Settings{
-  id Int @id @default(autoincrement())
+  id Int @id @default(1)
   responseDelay Int @default(5)
 
   createdAt DateTime @default(now())
