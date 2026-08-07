@@ -38,7 +38,7 @@ model Contact {
 
 model Message {
   id          Int    @id @default(autoincrement())
-  waMessageId String @unique
+  waMessageId String? @unique
 
   contactId Int
   contact   Contact @relation(fields: [contactId], references: [id])
@@ -65,6 +65,8 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+  PROCESSING
+  PENDING
 }
 
 model Settings{
