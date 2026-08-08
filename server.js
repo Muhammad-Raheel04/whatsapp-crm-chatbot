@@ -11,6 +11,7 @@ import './workers/responseWorker.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 
 const app = express();
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use("/api/v1/", webhookRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/settings", settingRoutes);
+app.use('/api/v1/categories', categoryRoutes);
 
 app.listen(PORT, () => {
   console.log(`visit http://localhost:${PORT}`);
