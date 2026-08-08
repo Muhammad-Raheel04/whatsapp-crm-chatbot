@@ -74,6 +74,19 @@ export const deleteProduct = async (req, res) => {
             })
         }
 
+        const exisitingProduct = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!exisitingProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
         await prisma.product.delete({
             where: {
                 id: Number(productId)
@@ -85,10 +98,80 @@ export const deleteProduct = async (req, res) => {
             message: "Product deleted successfully",
         })
     } catch (error) {
-        return res.status(201).json({
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const addKeywords = async (req, res) => {
+    try {
+        const { keywords } = req.body;
+        const { productId } = req.params;
+
+        if (!productId || !keywords) {
+            return res.status(400).json({
+                success: false,
+                message: "Required fields are missing",
+            })
+        }
+
+        const exisitingProduct = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            },
+            include: {
+                keywords: true,
+            }
+        })
+
+        if (!exisitingProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        let keywordArray = [];
+
+        if (keywords) {
+            try {
+                keywordArray = typeof keywords === 'string' ? JSON.parse(keywords) : keywords
+            } catch {
+                keywordArray = keywords.split(",").map(k => k.trim());
+            }
+        }
+
+        const exisitingKeywords = exisitingProduct.keywords.map((item) => item.keyword.toLowerCase());
+        const newKeywords = keywordArray.filter(keyword => !exisitingKeywords.includes(keyword.toLowerCase()));
+
+        if (newKeywords.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "No new keywords to add"
+            });
+        }
+
+        const keywordData = newKeywords.map(keyword => ({
+            keyword,
+            productId: Number(productId)
+        }));
+
+        await prisma.productKeyword.createMany({
+            data: keywordData
+        })
+
+        return res.status(200).json({
             success: true,
-            message: "Product Created",
-            product,
+            message: "Keywords added successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
         });
     }
 }
