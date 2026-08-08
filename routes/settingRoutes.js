@@ -6,7 +6,7 @@ const router = express.Router();
 router.post("/set-meta-wa-token", isAuthenticated, setMetaWhatsAppToken);
 router.get("/get-meta-wa-token", isAuthenticated, getMetaWhatsAppToken);
 
-router.post("delay/:delay", isAuthenticated, setDelay);
+router.post("/delay/:delay", isAuthenticated, setDelay);
 router.get("/get-delay", isAuthenticated, getDelay);
 
 export default router;
