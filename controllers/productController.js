@@ -175,3 +175,55 @@ export const addKeywords = async (req, res) => {
         });
     }
 }
+
+export const addImage = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "Product Id is required",
+            })
+        }
+
+        const exisitingProduct = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!exisitingProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No Images uploaded",
+            })
+        }
+
+        await prisma.productMedia.createMany({
+            data: req.files.map(file => ({
+                type: "IMAGE",
+                filePath: file.path,
+                productId: Number(productId),
+            }))
+        })
+
+        return res.status(201).json({
+            success: true,
+            message: "Images added successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
