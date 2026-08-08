@@ -34,10 +34,10 @@ export const addProduct = async (req, res) => {
             }
         })
 
-        if(exisitingProduct){
+        if (exisitingProduct) {
             return res.status(409).json({
-                success:false,
-                message:"Product already exist",
+                success: false,
+                message: "Product already exist",
             })
         }
 
@@ -59,6 +59,36 @@ export const addProduct = async (req, res) => {
             success: false,
             message: "Internal Server Error",
             error: error.message,
+        });
+    }
+}
+
+export const deleteProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "ProductId is required",
+            })
+        }
+
+        await prisma.product.delete({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Product deleted successfully",
+        })
+    } catch (error) {
+        return res.status(201).json({
+            success: true,
+            message: "Product Created",
+            product,
         });
     }
 }
