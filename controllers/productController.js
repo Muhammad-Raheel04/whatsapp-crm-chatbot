@@ -176,7 +176,7 @@ export const addKeywords = async (req, res) => {
     }
 }
 
-export const addImage = async (req, res) => {
+export const addMedia = async (req, res) => {
     try {
         const { productId } = req.params;
 
@@ -206,18 +206,35 @@ export const addImage = async (req, res) => {
                 message: "No Images uploaded",
             })
         }
+        let type;
 
-        await prisma.productMedia.createMany({
-            data: req.files.map(file => ({
-                type: "IMAGE",
+        const mediaData = req.files.map((file) => {
+
+            if (file.mimetype.startsWith("image/")) {
+                type = "IMAGE";
+            }
+            else if (file.mimetype.startsWith("video/")) {
+                type = "VIDEO";
+            }
+            else if (file.mimetype.startsWith("audio/")) {
+                type = "AUDIO";
+            }
+
+
+            return {
+                type,
                 filePath: file.path,
                 productId: Number(productId),
-            }))
+            };
+        })
+
+        await prisma.productMedia.createMany({
+            data: mediaData
         })
 
         return res.status(201).json({
             success: true,
-            message: "Images added successfully"
+            message: type.length>1?`${type.toLowerCase()} uploaded successfully`:`${type.toLowerCase()}s uploaded successfully`,
         });
     } catch (error) {
         return res.status(500).json({
