@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
-import { addImage, addKeywords, addProduct, deleteProduct } from '../controllers/productController.js';
+import { addKeywords, addMedia, addProduct, deleteProduct } from '../controllers/productController.js';
 import { upload } from '../middlewares/uploadMiddleware.js';
 const router = express.Router();
 
@@ -10,6 +10,6 @@ router.delete("/delete-product/:productId", isAuthenticated, deleteProduct);
 
 router.post("/add-keywords/:productId", isAuthenticated, addKeywords);
 
-router.post("/:productId/images", upload.array("images", 10), addImage);
+router.post("/:productId/media", isAuthenticated, upload.array("media", 10), addMedia);
 
 export default router;
