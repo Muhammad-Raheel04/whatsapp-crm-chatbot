@@ -243,19 +243,6 @@ export const getProductKeywords = async (req, res) => {
             })
         }
 
-        const product = await prisma.product.findUnique({
-            where: {
-                id: Number(productId)
-            },
-        })
-
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: "Product doesn't exist",
-            })
-        }
-
         const productKeywords = await prisma.productKeyword.findMany({
             where: {
                 productId: Number(productId),
@@ -336,6 +323,37 @@ export const addMedia = async (req, res) => {
             success: true,
             message: type.length > 1 ? `${type.toLowerCase()} uploaded successfully` : `${type.toLowerCase()}s uploaded successfully`,
         });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const getProductMedia = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "ProductId is required",
+            })
+        }
+
+        const productMedia = await prisma.productMedia.findMany({
+            where: {
+                productId: Number(productId),
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Product Media fetched succesfully",
+            productMedia,
+        })
     } catch (error) {
         return res.status(500).json({
             success: false,
