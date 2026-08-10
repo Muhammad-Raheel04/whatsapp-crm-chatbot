@@ -5,15 +5,20 @@ export const processStatusUpdate = async (job) => {
 
     const { statuses } = job.data;
 
-    for (const status of statuses) {
-        await prisma.message.update({
-            where: {
-                waMessageId: status.id
-            },
+    try {
+        for (const status of statuses) {
+            await prisma.message.update({
+                where: {
+                    waMessageId: status.id
+                },
 
-            data: {
-                status: status.status.toUpperCase()
-            }
-        });
+                data: {
+                    status: status.status.toUpperCase()
+                }
+            });
+        }
+    } catch (err) {
+        console.error("status update failed", err.message);
     }
+
 };
