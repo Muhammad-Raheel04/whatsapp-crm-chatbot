@@ -44,7 +44,7 @@ model ContactGroup {
 
   name        String  @unique
   description String?
-  prompt      String  @db.Text
+  prompt      String?  @db.Text
 
   contacts Contact[]
 
