@@ -12,7 +12,7 @@ model Users {
   name     String
   email    String @unique
   password String @db.Text
-  
+
   sessions Sessions[]
 
   createdAt DateTime @default(now())
@@ -31,13 +31,29 @@ model Contact {
   waId String  @unique
   name String?
 
+  groupId Int?
+  group   ContactGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
   message Message[]
 
   createdAt DateTime @default(now())
 }
 
+model ContactGroup {
+  id Int @id @default(autoincrement())
+
+  name        String  @unique
+  description String?
+  prompt      String  @db.Text
+
+  contacts Contact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Message {
-  id          Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   waMessageId String? @unique
 
   contactId Int
@@ -69,63 +85,60 @@ enum MessageStatus {
   PENDING
 }
 
-model Settings{
-  id Int @id @default(1)
-  responseDelay Int @default(5)
+model Settings {
+  id                Int     @id @default(1)
+  responseDelay     Int     @default(5)
   metaWhatsAppToken String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Product{
-  id Int @id @default(autoincrement())
-  name String
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
   description String?
-  price Float?
+  price       Float?
 
   categoryId Int
-  category Category @relation(fields:[categoryId],references:[id],onDelete:Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   keywords ProductKeyword[]
-  media ProductMedia[]
+  media    ProductMedia[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
-model Category{
-  id Int @id @default(autoincrement())
+model Category {
+  id   Int    @id @default(autoincrement())
   name String @unique
-  
+
   products Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
-model ProductKeyword{
-  id Int @id @default(autoincrement())
+model ProductKeyword {
+  id      Int    @id @default(autoincrement())
   keyword String
 
   productId Int
-  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
-
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-model ProductMedia{
-  id Int @id @default(autoincrement())
+model ProductMedia {
+  id   Int       @id @default(autoincrement())
   type MediaType
 
   filePath String
 
   productId Int
-  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
-
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
-enum MediaType{
+
+enum MediaType {
   IMAGE
   VIDEO
   AUDIO
