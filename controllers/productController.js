@@ -232,6 +232,50 @@ export const addKeywords = async (req, res) => {
     }
 }
 
+export const getProductKeywords = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "ProductId is required",
+            })
+        }
+
+        const product = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            },
+        })
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        const productKeywords = await prisma.productKeyword.findMany({
+            where: {
+                productId: Number(productId),
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Fetched product keywords successfully",
+            productKeywords,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 export const addMedia = async (req, res) => {
     try {
         const { productId } = req.params;
