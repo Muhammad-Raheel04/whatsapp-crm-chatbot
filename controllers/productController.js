@@ -144,6 +144,24 @@ export const getProductById = async (req, res) => {
     }
 }
 
+export const getAllProducts = async (req, res) => {
+    try {
+        const products = await prisma.product.findMany();
+
+        return res.status(200).json({
+            success: true,
+            message: "Products fetched successfully",
+            products,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 export const addKeywords = async (req, res) => {
     try {
         const { keywords } = req.body;
