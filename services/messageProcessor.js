@@ -1,10 +1,21 @@
 import { openai } from "../config/openai.js";
 import { prisma } from "../config/prisma.js";
+import { findProductbyKeyword } from "./findProductByKeywordService.js";
 
 export const generateReply = async (text, dbContact) => {
 
     const message = text.toLowerCase();
     try {
+        const product = await findProductbyKeyword(text);
+
+        if (product) {
+            return {
+                type: "PRODUCT",
+                text: product?.description,
+                media: product.media,
+            }
+        }
+
         const previousMessages = await prisma.message.findMany({
             where: {
                 contactId: dbContact.id
@@ -23,7 +34,9 @@ export const generateReply = async (text, dbContact) => {
                     content: `You are a WhatsApp assistant`
                 },
                 ...previousMessages.reverse().map(msg => ({
-                    role: msg.direction === 'INCOMING' ? "user" : "assistant",
+                    role: msg.direction === "INCOMING"
+                        ? "user"
+                        : "assistant",
                     content: msg.body
                 })),
                 {
@@ -34,7 +47,10 @@ export const generateReply = async (text, dbContact) => {
             temperature: 0.7,
         })
 
-        return response.choices[0].message.content;
+        return {
+            type: "TEXT",
+            text: response.choices[0].message.content,
+        }
     } catch (error) {
         console.error("AI reply generation failed:", error.message);
     }
