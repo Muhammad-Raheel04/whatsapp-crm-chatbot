@@ -53,5 +53,9 @@ export const generateReply = async (text, dbContact) => {
         }
     } catch (error) {
         console.error("AI reply generation failed:", error.message);
+        return {
+            type: "TEXT",
+            text: "Sorry, I'm having trouble replying right now. Please try again shortly."
+        };
     }
 }
