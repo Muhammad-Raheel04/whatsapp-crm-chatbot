@@ -59,7 +59,7 @@ export const processIncomingMessage = async (job) => {
         const outgoingMessage = await prisma.message.create({
             data: {
                 type: "text",
-                body: reply,
+                body: reply.text,
                 direction: "OUTGOING",
                 status: "PENDING",
                 contactId: dbContact.id
@@ -71,7 +71,7 @@ export const processIncomingMessage = async (job) => {
             "send-message",
             {
                 to: message.from,
-                message: reply,
+                response: reply,
                 contactId: dbContact.id,
                 messageId:outgoingMessage.id
             },
