@@ -106,6 +106,44 @@ export const deleteProduct = async (req, res) => {
     }
 }
 
+export const getProductById = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "ProductId is required",
+            })
+        }
+
+        const product = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Product fetched successfully",
+            product,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 export const addKeywords = async (req, res) => {
     try {
         const { keywords } = req.body;
@@ -234,7 +272,7 @@ export const addMedia = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: type.length>1?`${type.toLowerCase()} uploaded successfully`:`${type.toLowerCase()}s uploaded successfully`,
+            message: type.length > 1 ? `${type.toLowerCase()} uploaded successfully` : `${type.toLowerCase()}s uploaded successfully`,
         });
     } catch (error) {
         return res.status(500).json({
