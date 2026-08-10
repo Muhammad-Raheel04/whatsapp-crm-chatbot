@@ -1,9 +1,10 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
-import { addKeywords, addMedia, addProduct, deleteProduct } from '../controllers/productController.js';
+import { addKeywords, addMedia, addProduct, deleteProduct, getProductById } from '../controllers/productController.js';
 import { upload } from '../middlewares/uploadMiddleware.js';
 const router = express.Router();
 
+router.get("/product/:productId", isAuthenticated, getProductById);
 router.post("/add-product", isAuthenticated, addProduct);
 router.delete("/delete-product/:productId", isAuthenticated, deleteProduct);
 
