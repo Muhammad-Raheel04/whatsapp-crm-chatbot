@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 
 const app = express();
 app.use(express.json());
@@ -35,6 +36,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/settings", settingRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/contacts", contactRoutes);
 
 app.listen(PORT, () => {
   console.log(`visit http://localhost:${PORT}`);
