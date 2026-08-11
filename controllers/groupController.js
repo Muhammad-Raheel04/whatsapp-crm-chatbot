@@ -128,7 +128,7 @@ export const getGroupById = async (req, res) => {
                 message: "Group doesn't exist",
             })
         }
-        
+
         return res.status(200).json({
             success: true,
             message: `Successfully fetched ${group.name} group`,
@@ -143,6 +143,50 @@ export const getGroupById = async (req, res) => {
     }
 }
 
+export const getGroupMembers = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        if (!groupId || !groupId < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "GroupId is missing or invalid"
+            })
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId),
+            },
+            select: {
+                contacts:{
+                    select:{
+                        contact:true
+                    }
+                }
+            }
+        })
+
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Successfully fetched ${group.name} group`,
+            group,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        })
+    }
+}
 export const addContactToGroup = async (req, res) => {
     try {
         const { contactId, groupName } = req.body;
