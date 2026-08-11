@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
-import { getDelay, getMetaWhatsAppToken, getSystemPrompt, setDelay, setMetaWhatsAppToken, setSystemPrompt } from '../controllers/settingController.js';
+import { getDelay, getGlobalAiMode, getMetaWhatsAppToken, getSystemPrompt, setDelay, setMetaWhatsAppToken, setSystemPrompt, togggleGlobalAIMode } from '../controllers/settingController.js';
 const router = express.Router();
 
 router.patch("/set-meta-wa-token", isAuthenticated, setMetaWhatsAppToken);
@@ -11,5 +11,8 @@ router.get("/get-delay", isAuthenticated, getDelay);
 
 router.patch("/set-system-prompt", isAuthenticated, setSystemPrompt);
 router.get("/get-system-prompt", isAuthenticated, getSystemPrompt);
+
+router.patch("/toggle-global-ai-mode", isAuthenticated, togggleGlobalAIMode);
+router.get("/get-global-ai-mode", isAuthenticated, getGlobalAiMode);
 
 export default router;
