@@ -121,3 +121,40 @@ export const getMetaWhatsAppToken = async (req, res) => {
         });
     }
 }
+
+export const setSystemPrompt = async (req, res) => {
+    try {
+        const { systemPrompt } = req.body;
+
+        if (!systemPrompt) {
+            return res.status(400).json({
+                success: false,
+                message: "System Prompt is required"
+            })
+        }
+
+        await prisma.settings.upsert({
+            where: {
+                id: 1,
+            },
+            create: {
+                id: 1,
+                systemPrompt:systemPrompt.trim(),
+            },
+            update: {
+                systemPrompt:systemPrompt.trim(),
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "System Prompt Updated Successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
