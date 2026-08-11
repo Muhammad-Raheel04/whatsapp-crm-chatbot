@@ -346,7 +346,7 @@ export const setDescription = async (req, res) => {
         const { groupId } = req.params;
         const { description } = req.body;
 
-        if (!groupId || description===undefined) {
+        if (!groupId || description === undefined) {
             return res.status(400).json({
                 success: false,
                 message: "Required fields are missing",
@@ -417,7 +417,7 @@ export const deleteDescription = async (req, res) => {
                 id: Number(groupId),
             },
             data: {
-                description:null
+                description: null
             }
         })
 
@@ -425,6 +425,63 @@ export const deleteDescription = async (req, res) => {
             success: true,
             message: "Group description deleted successfully",
         })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const setPrompt = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { prompt } = req.body;
+
+        if (!groupId) {
+            return res.status(400).json({
+                success: false,
+                message: "Group id is missing",
+            })
+        }
+
+        const normalizedPrompt = prompt.trim();
+
+        if (normalizedPrompt === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Prompt is required",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId)
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                prompt: normalizedPrompt,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Group prompt updated successfully",
+        })
+
     } catch (error) {
         return res.status(500).json({
             success: false,
