@@ -101,6 +101,7 @@ model Settings {
   id                Int     @id @default(1)
   responseDelay     Int     @default(5)
   metaWhatsAppToken String?
+  systemPrompt      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
