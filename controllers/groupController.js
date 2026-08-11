@@ -159,9 +159,9 @@ export const getGroupMembers = async (req, res) => {
                 id: Number(groupId),
             },
             select: {
-                contacts:{
-                    select:{
-                        contact:true
+                contacts: {
+                    select: {
+                        contact: true
                     }
                 }
             }
@@ -187,6 +187,7 @@ export const getGroupMembers = async (req, res) => {
         })
     }
 }
+
 export const addContactToGroup = async (req, res) => {
     try {
         const { contactId, groupName } = req.body;
@@ -330,6 +331,99 @@ export const removeContactFromGroup = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: `${existingContact?.name || "Contact"} removed successfully from ${existingGroup.name}`,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const setDescription = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { description } = req.body;
+
+        if (!groupId || description===undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Required fields are missing",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId)
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                description,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Group description updated successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const deleteDescription = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        if (!groupId) {
+            return res.status(400).json({
+                success: false,
+                message: "Group id is missing",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId)
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                description:null
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Group description deleted successfully",
         })
     } catch (error) {
         return res.status(500).json({
