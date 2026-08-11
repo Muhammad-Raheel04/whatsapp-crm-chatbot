@@ -139,16 +139,34 @@ export const setSystemPrompt = async (req, res) => {
             },
             create: {
                 id: 1,
-                systemPrompt:systemPrompt.trim(),
+                systemPrompt: systemPrompt.trim(),
             },
             update: {
-                systemPrompt:systemPrompt.trim(),
+                systemPrompt: systemPrompt.trim(),
             }
         })
 
         return res.status(200).json({
             success: true,
             message: "System Prompt Updated Successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
+
+export const getSystemPrompt = async (req, res) => {
+    try {
+        const settings = await prisma.settings.findFirst()
+
+        return res.status(200).json({
+            success: true,
+            message: "System Prompt Updated Successfully",
+            systemPrompt: settings.systemPrompt,
         })
     } catch (error) {
         return res.status(500).json({
