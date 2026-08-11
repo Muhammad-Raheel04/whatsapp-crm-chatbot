@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
-import { addContactToGroup, createGroup, deleteDescription, deleteGroup, getAllGroups, getGroupById, getGroupMembers, removeContactFromGroup, setDescription } from '../controllers/groupController.js';
+import { addContactToGroup, createGroup, deleteDescription, deleteGroup, getAllGroups, getGroupById, getGroupMembers, removeContactFromGroup, setDescription, setPrompt } from '../controllers/groupController.js';
 const router = express.Router();
 
 router.get("/get-all-groups", isAuthenticated, getAllGroups);
@@ -13,5 +13,7 @@ router.patch("/remove-contact-from-group", isAuthenticated, removeContactFromGro
 
 router.patch("/set-description/:groupId", isAuthenticated, setDescription);
 router.patch("/delete-description/:groupId", isAuthenticated, deleteDescription);
+
+router.patch("/set-prompt/:groupId", isAuthenticated, setPrompt);
 
 export default router;
