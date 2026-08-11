@@ -176,3 +176,58 @@ export const getSystemPrompt = async (req, res) => {
         });
     }
 }
+
+export const togggleGlobalAIMode = async (req, res) => {
+    try {
+        const { value } = req.body;
+
+        if (value === undefined || typeof value !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: "Required field is missing",
+            })
+        }
+
+        await prisma.settings.upsert({
+            where: {
+                id: 1
+            },
+            create: {
+                id: 1,
+                aiEnabled: value,
+            },
+            update: {
+                aiEnabled: value,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: `AI ${value ? 'enabled' : 'disabled'} successfully`
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
+
+export const getGlobalAiMode = async (req, res) => {
+    try {
+        const settings = await prisma.settings.findFirst();
+
+        return res.status(200).json({
+            success: true,
+            message: "AI mode fetched successfully",
+            globalAiMode: settings.aiEnabled
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
