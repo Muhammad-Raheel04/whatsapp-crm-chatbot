@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
-import { addContactToGroup, createGroup, deleteDescription, deleteGroup, deleteGroupPrompt, getAllGroups, getGroupById, getGroupMembers, removeContactFromGroup, setDescription, setGroupPrompt, updateGroupName } from '../controllers/groupController.js';
+import { addContactToGroup, createGroup, deleteDescription, deleteGroup, deleteGroupPrompt, getAllGroups, getGroupAiModeById, getGroupById, getGroupMembers, removeContactFromGroup, setDescription, setGroupPrompt, togggleGroupAIModeById, updateGroupName } from '../controllers/groupController.js';
 const router = express.Router();
 
 router.get("/get-all-groups", isAuthenticated, getAllGroups);
@@ -17,5 +17,8 @@ router.patch("/delete-description/:groupId", isAuthenticated, deleteDescription)
 
 router.patch("/set-group-prompt/:groupId", isAuthenticated, setGroupPrompt);
 router.patch("/delete-group-prompt/:groupId", isAuthenticated, deleteGroupPrompt);
+
+router.patch("/toggle-group-ai-mode-by-id/:groupId", isAuthenticated, togggleGroupAIModeById);
+router.get("/get-group-ai-mode-by-id/:groupId", isAuthenticated, getGroupAiModeById);
 
 export default router;
