@@ -11,7 +11,7 @@ export const createGroup = async (req, res) => {
             })
         }
 
-        const exisitingGroup = await prisma.contactGroup.findUnique({
+        const exisitingGroup = await prisma.groups.findUnique({
             where: {
                 name,
             }
@@ -24,7 +24,7 @@ export const createGroup = async (req, res) => {
             })
         }
 
-        const group = await prisma.contactGroup.create({
+        const group = await prisma.groups.create({
             data: {
                 name,
             }
@@ -55,7 +55,7 @@ export const deleteGroup = async (req, res) => {
             })
         }
 
-        const exisitingGroup = await prisma.contactGroup.findUnique({
+        const exisitingGroup = await prisma.groups.findUnique({
             where: {
                 id: Number(groupId),
             }
@@ -68,7 +68,7 @@ export const deleteGroup = async (req, res) => {
             })
         }
 
-        await prisma.contactGroup.delete({
+        await prisma.groups.delete({
             where: {
                 id: Number(groupId),
             }
@@ -98,7 +98,7 @@ export const addContactToGroup = async (req, res) => {
             })
         }
 
-        const existingGroup = await prisma.contactGroup.findUnique({
+        const existingGroup = await prisma.groups.findUnique({
             where: {
                 name: groupName.trim()
             }
@@ -120,29 +120,116 @@ export const addContactToGroup = async (req, res) => {
         if (!existingContact) {
             return res.status(404).json({
                 success: false,
-                message: "Contac doesn't exist"
+                message: "Contact doesn't exist"
             })
         }
 
-
-        if (existingContact.groupId === existingGroup.id) {
+        const existingGroupContact = await prisma.groupContact.findUnique({
+            where: {
+                contactId_groupId: {
+                    contactId: Number(contactId),
+                    groupId: existingGroup.id,
+                }
+            }
+        })
+        if (existingGroupContact) {
             return res.status(409).json({
                 success: false,
                 message: `${existingContact.name || "Contact"} is already a member`
             })
         }
-        await prisma.contact.update({
+
+        await prisma.groupContact.upsert({
             where: {
-                id: Number(contactId)
+                contactId_groupId: {
+                    contactId: Number(contactId),
+                    groupId: existingGroup.id,
+                }
             },
-            data: {
+            update: {},
+            create: {
+                contactId: Number(contactId),
                 groupId: existingGroup.id,
+            }
+        })
+
+        return res.status(201).json({
+            success: true,
+            message: `${existingContact?.name || "Contact"} added successfully to ${existingGroup.name}`,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const removeContactFromGroup = async (req, res) => {
+    try {
+        const { contactId, groupName } = req.body;
+
+        if (!contactId || !groupName) {
+            return res.status(400).json({
+                success: false,
+                message: "Required fields are missing",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                name: groupName.trim()
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        const existingContact = await prisma.contact.findUnique({
+            where: {
+                id: Number(contactId),
+            }
+        })
+
+        if (!existingContact) {
+            return res.status(404).json({
+                success: false,
+                message: "Contact doesn't exist"
+            })
+        }
+
+        const existingGroupMember = await prisma.groupContact.findUnique({
+            where: {
+                contactId_groupId: {
+                    contactId: Number(contactId),
+                    groupId: existingGroup.id,
+                }
+            }
+        })
+        if (!existingGroupMember) {
+            return res.status(400).json({
+                success: false,
+                message: `${existingContact.name || "Contact"} is not a member`
+            })
+        }
+
+        await prisma.groupContact.delete({
+            where: {
+                contactId_groupId: {
+                    contactId: Number(contactId),
+                    groupId: existingGroup.id
+                }
             }
         })
 
         return res.status(200).json({
             success: true,
-            message: `${existingContact?.name || "Contact"} added successfully to ${existingGroup.name}`,
+            message: `${existingContact?.name || "Contact"} removed successfully from ${existingGroup.name}`,
         })
     } catch (error) {
         return res.status(500).json({
