@@ -44,6 +44,7 @@ model Groups {
   name        String  @unique
   description String?
   prompt      String? @db.Text
+  aiEnabled   Boolean @default(true)
 
   contacts GroupContact[]
 
@@ -102,6 +103,7 @@ model Settings {
   responseDelay     Int     @default(5)
   metaWhatsAppToken String?
   systemPrompt      String?
+  aiEnabled         Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
