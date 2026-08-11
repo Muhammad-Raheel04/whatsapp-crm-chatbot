@@ -434,7 +434,7 @@ export const deleteDescription = async (req, res) => {
     }
 }
 
-export const setPrompt = async (req, res) => {
+export const setGroupPrompt = async (req, res) => {
     try {
         const { groupId } = req.params;
         const { prompt } = req.body;
@@ -480,6 +480,110 @@ export const setPrompt = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Group prompt updated successfully",
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const deleteGroupPrompt = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        if (!groupId) {
+            return res.status(400).json({
+                success: false,
+                message: "Group id is missing",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId)
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                prompt: null,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Group prompt deleted successfully",
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
+export const updateGroupName = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { name } = req.body;
+
+        if (!groupId) {
+            return res.status(400).json({
+                success: false,
+                message: "Group id is missing",
+            })
+        }
+
+        const normalizedName = name.trim();
+
+        if (normalizedName === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Prompt is required",
+            })
+        }
+
+        const existingGroup = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId)
+            }
+        })
+
+        if (!existingGroup) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                name: normalizedName
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Group name updated successfully",
         })
 
     } catch (error) {
