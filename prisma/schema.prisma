@@ -31,25 +31,37 @@ model Contact {
   waId String  @unique
   name String?
 
-  groupId Int?
-  group   ContactGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  groups GroupContact[]
 
   message Message[]
 
   createdAt DateTime @default(now())
 }
 
-model ContactGroup {
+model Groups {
   id Int @id @default(autoincrement())
 
   name        String  @unique
   description String?
-  prompt      String?  @db.Text
+  prompt      String? @db.Text
 
-  contacts Contact[]
+  contacts GroupContact[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model GroupContact {
+  contactId Int
+  groupId   Int
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  group   Groups  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([contactId, groupId])
+  @@index([groupId])
 }
 
 model Message {
@@ -89,6 +101,7 @@ model Settings {
   id                Int     @id @default(1)
   responseDelay     Int     @default(5)
   metaWhatsAppToken String?
+  systemPrompt      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

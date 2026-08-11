@@ -16,7 +16,7 @@ import settingRoutes from './routes/settingRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
-import groupRoutes from './routes/groupRoutes.js';
+import groupRoutes from './routes/groupRoutes.js'
 
 const app = express();
 app.use(express.json());
