@@ -1,6 +1,7 @@
 import { openai } from "../config/openai.js";
 import { prisma } from "../config/prisma.js";
 import { findProductbyKeyword } from "./findProductByKeywordService.js";
+import { getSystemPrompt } from "./systemPromptService.js";
 
 export const generateReply = async (text, dbContact) => {
 
@@ -26,12 +27,13 @@ export const generateReply = async (text, dbContact) => {
             take: 10
         })
 
+        const systemPrompt = await getSystemPrompt();
         const response = await openai.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             messages: [
                 {
                     role: "system",
-                    content: `You are a WhatsApp assistant`
+                    content: systemPrompt
                 },
                 ...previousMessages.reverse().map(msg => ({
                     role: msg.direction === "INCOMING"
