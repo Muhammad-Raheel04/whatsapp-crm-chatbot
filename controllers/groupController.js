@@ -87,6 +87,24 @@ export const deleteGroup = async (req, res) => {
     }
 }
 
+export const getAllGroups = async (req, res) => {
+    try {
+        const groups = await prisma.groups.findMany();
+
+        return res.status(200).json({
+            success: true,
+            message: "Groups fetched successfully",
+            groups,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 export const addContactToGroup = async (req, res) => {
     try {
         const { contactId, groupName } = req.body;
