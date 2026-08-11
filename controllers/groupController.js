@@ -594,3 +594,97 @@ export const updateGroupName = async (req, res) => {
         });
     }
 }
+
+export const togggleGroupAIModeById = async (req, res) => {
+    try {
+        const { value } = req.body;
+        const { groupId } = req.params;
+
+        if (value === undefined || typeof value !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: "Toggle value missing",
+            })
+        }
+
+        if (!groupId || !groupId < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "GroupId is missing or invalid"
+            })
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId),
+            }
+        })
+
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        await prisma.groups.update({
+            where: {
+                id: Number(groupId),
+            },
+            data: {
+                aiEnabled: value,
+            }
+        })
+        return res.status(200).json({
+            success: true,
+            message: `AI ${value ? 'enabled' : 'disabled'} successfully`
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
+
+export const getGroupAiModeById = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        if (!groupId || !groupId < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "GroupId is missing or invalid"
+            })
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: {
+                id: Number(groupId),
+            },
+            select: {
+                aiEnabled: true,
+            }
+        })
+
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: "Group doesn't exist",
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "AI mode fetched successfully",
+            groupAiMode: group.aiEnabled,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
