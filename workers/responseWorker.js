@@ -32,6 +32,8 @@ const responseWorker = new Worker(
 
         try {
             if (result?.messages?.[0]?.id) {
+                console.log(`Message sent successfully to ${to}.`);
+
                 const targetMessage = await prisma.message.findUnique({
                     where: { id: messageId }
                 });
@@ -49,14 +51,11 @@ const responseWorker = new Worker(
                 }
             }
         } catch (err) {
-            if (err.code === "P2002") {
-                console.warn(`waMessageId ${result.messages[0].id} already exists — likely duplicate send`, err.meta);
-            } else {
-                console.error("Message update failed:", err);
-            }
+            console.error(`Failed to send message to ${to}:`,err.response?.data || err.message);
+
+            throw err;
         }
 
-        console.log("Message sent");
     },
     {
         connection: redisConnection,
