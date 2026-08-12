@@ -1,6 +1,17 @@
 import { prisma } from "../config/prisma.js"
 
 export const getBotMode = async (contactId) => {
+
+    const settings = await prisma.settings.findUnique({
+        where: {
+            id: 1,
+        }
+    })
+
+    if (settings.aiEnabled) {
+        return settings?.aiEnabled;
+    }
+
     const groups = await prisma.groupContact.findMany({
         where: {
             contactId,
@@ -9,18 +20,10 @@ export const getBotMode = async (contactId) => {
             group: true,
         }
     });
-
-    if (groups.length > 0) {
-        const isAiEnabled = groups.some((gc) => gc.group.aiEnabled === true);
-
-        return isAiEnabled;
+    if (groups.length === 0) {
+        return true;
     }
-    
-    const settings = await prisma.settings.findUnique({
-        where: {
-            id: 1,
-        }
-    })
 
-    return settings?.aiEnabled;
+    return groups.some((gc) => gc.group.aiEnabled === true);
+
 } 
