@@ -7,7 +7,7 @@ export const sendTextMessage = async (req, res) => {
         const { text } = req.body;
 
         if (!text || !text.trim()) {
-            return req.status(400).json({
+            return res.status(400).json({
                 success: false,
                 message: "Message is empty",
             })
