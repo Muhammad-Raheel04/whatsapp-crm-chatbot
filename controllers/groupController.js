@@ -637,7 +637,7 @@ export const togggleGroupAIModeById = async (req, res) => {
         })
         return res.status(200).json({
             success: true,
-            message: `AI ${value ? 'enabled' : 'disabled'} successfully`
+            message: `AI ${value ? 'enabled' : 'disabled'} successfully for ${group.name} group`
         })
     } catch (error) {
         return res.status(500).json({
