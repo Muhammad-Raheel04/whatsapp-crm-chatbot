@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { responseQueue } from "../queues/responseQueue.js";
+import { getBotMode } from "../services/botModeService.js";
 import { getDelay } from "../services/delayService.js";
 import { generateReply } from "../services/messageProcessor.js";
 import { sendWhatsAppMessage } from "../services/whatsAppService.js";
@@ -52,6 +53,12 @@ export const processIncomingMessage = async (job) => {
 
         });
 
+        const botEnabled = await getBotMode();
+
+        if (!botEnabled) {
+            console.log("Bot disabled. Reply Manually");
+            return;
+        }
         const reply = await generateReply(body, dbContact);
 
         const delay = await getDelay();
@@ -73,7 +80,7 @@ export const processIncomingMessage = async (job) => {
                 to: message.from,
                 response: reply,
                 contactId: dbContact.id,
-                messageId:outgoingMessage.id
+                messageId: outgoingMessage.id
             },
             {
                 delay: delay * 1000
