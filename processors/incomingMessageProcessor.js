@@ -53,7 +53,7 @@ export const processIncomingMessage = async (job) => {
 
         });
 
-        const botEnabled = await getBotMode();
+        const botEnabled = await getBotMode(dbContact.id);
 
         if (!botEnabled) {
             console.log("Bot disabled. Reply Manually");
