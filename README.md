@@ -1,4 +1,4 @@
-# WhatsApp Bot Backend - Local Setup
+# WhatsApp Bot Backend Local Setup
 
 This guide explains how to set up and run the WhatsApp Bot backend locally.
 

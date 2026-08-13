@@ -13,6 +13,16 @@ const responseWorker = new Worker(
         if (response.type === 'TEXT') {
             result = await sendWhatsAppMessage({ to, message: response.text });
         }
+        else if (response.type === 'MEDIA') {
+            result = await sendWhatsAppMedia({
+                to,
+                media: {
+                    type: response.media.type.toLowerCase(),
+                    filePath: toPublicMediaUrl(response.media.filePath),
+                    caption: response.media.caption || undefined,
+                }
+            });
+        }
         else if (response.type === 'PRODUCT') {
             for (const media of response.media) {
                 await sendWhatsAppMedia({
@@ -51,7 +61,7 @@ const responseWorker = new Worker(
                 }
             }
         } catch (err) {
-            console.error(`Failed to send message to ${to}:`,err.response?.data || err.message);
+            console.error(`Failed to send message to ${to}:`, err.response?.data || err.message);
 
             throw err;
         }
