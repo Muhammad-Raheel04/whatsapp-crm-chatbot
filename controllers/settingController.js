@@ -231,3 +231,65 @@ export const getGlobalAiMode = async (req, res) => {
         });
     }
 }
+
+
+export const setgroqOpenAiKey = async (req, res) => {
+    try {
+        const { key } = req.body;
+
+        if (!key) {
+            return res.status(400).json({
+                success: false,
+                message: "Groq Open AI Key is required"
+            })
+        }
+
+        await prisma.settings.upsert({
+            where: {
+                id: 1,
+            },
+            create: {
+                id: 1,
+                groqOpenAiKey: (key).trim(),
+            },
+            update: {
+                groqOpenAiKey: (key).trim()
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Groq Open AI Key Updated Successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
+
+export const getgroqOpenAiKey = async (req, res) => {
+    try {
+        const settings = await prisma.settings.findFirst();
+
+        if (!settings.groqOpenAiKey) {
+            return res.status(404).json({
+                success: false,
+                message: "Groq Open AI Key not configured"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Groq Open AI Key fetched Successfully",
+            groqOpenAiKey: settings.groqOpenAiKey,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
