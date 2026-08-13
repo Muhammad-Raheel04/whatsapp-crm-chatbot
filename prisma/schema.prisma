@@ -105,6 +105,9 @@ model Settings {
   systemPrompt      String?
   aiEnabled         Boolean @default(true)
 
+  groqOpenAiKey String?
+  groqApiKey    String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
