@@ -34,15 +34,24 @@ export const sendWhatsAppMedia = async ({ to, media }) => {
     const metaWaAccessToken = await getMetaWaToken();
 
     try {
+        const mediaData = {
+            link: media.filePath,
+        };
+
+        if (media.caption && ["image", "video", "document"].includes(media.type)) {
+            mediaData.caption = media.caption;
+        }
+
+        if (media.type === "document" && media.filename) {
+            mediaData.filename = media.filename;
+        }
         const response = await axios.post(
             url,
             {
                 messaging_product: "whatsapp",
                 to,
                 type: media.type,
-                [media.type]: {
-                    link: media.filePath
-                }
+                [media.type]:mediaData
             },
             {
                 headers: {
@@ -59,5 +68,6 @@ export const sendWhatsAppMedia = async ({ to, media }) => {
             "Media Graph API Error",
             error.response?.data
         );
+        throw error;
     }
 };
