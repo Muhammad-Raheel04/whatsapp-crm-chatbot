@@ -18,6 +18,7 @@ import productRoutes from './routes/productRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
 import replyRoutes from './routes/messageRoutes.js';
+import broadcastRoutes from './routes/broadcastRoutes.js';
 
 const app = express();
 app.use(express.json());
@@ -41,6 +42,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/contacts", contactRoutes);
 app.use("/api/v1/groups", groupRoutes);
 app.use("/api/v1/messages", replyRoutes);
+app.use("/api/v1/broadcasts", broadcastRoutes);
 
 app.listen(PORT, () => {
   console.log(`visit http://localhost:${PORT}`);
