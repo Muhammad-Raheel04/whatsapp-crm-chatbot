@@ -7,71 +7,102 @@ import { toPublicMediaUrl } from "../utils/mediaUrl.js";
 const responseWorker = new Worker(
     "whatsapp-response",
     async (job) => {
-        const { to, response, contactId, messageId } = job.data;
+        const { to, response, outgoingRecords: rawOutgoingRecords, messageId } = job.data;
 
-        let result;
-        if (response.type === 'TEXT') {
-            result = await sendWhatsAppMessage({ to, message: response.text });
+        let outgoingRecords = rawOutgoingRecords;
+
+        if (!outgoingRecords && messageId) {
+            if (response.type === "TEXT") {
+                outgoingRecords = [{ kind: "TEXT", messageId }];
+            } else if (response.type === "MEDIA") {
+                outgoingRecords = [{ kind: "MEDIA", messageId, media: response.media }];
+            } else if (response.type === "PRODUCT") {
+                outgoingRecords = [];
+            }
         }
-        else if (response.type === 'MEDIA') {
-            result = await sendWhatsAppMedia({
-                to,
-                media: {
-                    type: response.media.type.toLowerCase(),
-                    filePath: toPublicMediaUrl(response.media.filePath),
-                    caption: response.media.caption || undefined,
-                }
-            });
-        }
-        else if (response.type === 'PRODUCT') {
-            for (const media of response.media) {
-                await sendWhatsAppMedia({
+
+        const updateRecord = async (recordMessageId, result) => {
+            if (!result?.messages?.[0]?.id) return;
+            try {
+                await prisma.message.update({
+                    where: { id: recordMessageId },
+                    data: { waMessageId: result.messages[0].id, status: "SENT" }
+                });
+                console.log(`Message sent successfully to ${to}.`);
+            } catch (err) {
+                console.error(`Failed to persist status for message ${recordMessageId}:`, err.message);
+            }
+        };
+
+        const markFailed = async (recordMessageId) => {
+            await prisma.message.update({
+                where: { id: recordMessageId },
+                data: { status: "FAILED" }
+            }).catch(() => {});
+        };
+
+        if (response.type === "TEXT") {
+            const record = outgoingRecords[0];
+            if (!record) {
+                console.error(`No outgoing record found for TEXT message to ${to}.`);
+                return;
+            }
+            const result = await sendWhatsAppMessage({ to, message: response.text });
+            await updateRecord(record.messageId, result);
+
+        } else if (response.type === "MEDIA") {
+            const record = outgoingRecords[0];
+            if (!record) {
+                console.error(`No outgoing record found for MEDIA message to ${to}.`);
+                return;
+            }
+            const media = record.media || response.media;
+            try {
+                const result = await sendWhatsAppMedia({
                     to,
                     media: {
                         type: media.type.toLowerCase(),
-                        filePath: toPublicMediaUrl(media.filePath)
+                        filePath: toPublicMediaUrl(media.filePath),
+                        caption: media.caption || undefined,
                     }
                 });
+                await updateRecord(record.messageId, result);
+            } catch (err) {
+                await markFailed(record.messageId);
+                throw err;
             }
 
-            result = await sendWhatsAppMessage({
-                to,
-                message: response.text
-            });
-        }
+        } else if (response.type === "PRODUCT") {
+            const mediaRecords = outgoingRecords.filter(r => r.kind === "MEDIA");
+            const textRecord = outgoingRecords.find(r => r.kind === "TEXT");
 
-        try {
-            if (result?.messages?.[0]?.id) {
-                console.log(`Message sent successfully to ${to}.`);
-
-                const targetMessage = await prisma.message.findUnique({
-                    where: { id: messageId }
-                });
-
-                if (!targetMessage) {
-                    console.warn(`Skipping response status update: outgoing message not found for id ${messageId}`);
-                } else {
-                    await prisma.message.update({
-                        where: { id: messageId },
-                        data: {
-                            waMessageId: result.messages[0].id,
-                            status: "SENT"
+            for (const record of mediaRecords) {
+                try {
+                    const result = await sendWhatsAppMedia({
+                        to,
+                        media: {
+                            type: record.media.type.toLowerCase(),
+                            filePath: toPublicMediaUrl(record.media.filePath)
                         }
                     });
+                    await updateRecord(record.messageId, result);
+                } catch (err) {
+                    console.error(`Media send failed for message ${record.messageId}:`, err.response?.data || err.message);
+                    await markFailed(record.messageId);
                 }
             }
-        } catch (err) {
-            console.error(`Failed to send message to ${to}:`, err.response?.data || err.message);
 
-            throw err;
+            if (textRecord) {
+                const textResult = await sendWhatsAppMessage({ to, message: response.text });
+                await updateRecord(textRecord.messageId, textResult);
+            }
         }
-
     },
     {
         connection: redisConnection,
         concurrency: 5
     }
-)
+);
 
 responseWorker.on("failed", (job, err) => {
     console.error(`Response job ${job?.id} failed:`, err.message);
