@@ -45,3 +45,38 @@ export const getAllContactsWithLastMessage = async (req, res) => {
         })
     }
 }
+
+export const getContactChatHistoryByContactId = async (req, res) => {
+    try {
+        const { contactId } = req.params;
+
+        if (!contactId) {
+            return res.status(400).json({
+                success: false,
+                message: "Contact id is required",
+            })
+        }
+
+        const chatHistory = await prisma.message.findMany({
+            where: {
+                contactId: Number(contactId),
+            },
+            orderBy: {
+                createdAt: "asc",
+            },
+            take: 10
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Successfully fetched chat history",
+            chatHistory,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
