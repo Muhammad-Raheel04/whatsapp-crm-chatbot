@@ -63,16 +63,55 @@ export const processIncomingMessage = async (job) => {
 
         const delay = await getDelay();
 
-        const outgoingMessage = await prisma.message.create({
-            data: {
-                type: "text",
-                body: reply.text,
-                direction: "OUTGOING",
-                status: "PENDING",
-                contactId: dbContact.id
-            }
+        const outgoingRecords = [];
 
-        });
+        if (reply.type === 'PRODUCT') {
+            for (const media of reply.media) {
+                const row = await prisma.message.create({
+                    data: {
+                        type: reply.type,
+                        body: reply.text,
+                        direction: "OUTGOING",
+                        status: "PENDING",
+                        contactId: dbContact.id
+                    }
+                })
+                outgoingRecords.push({ kind: "MEDIA", messageId: row.id, media })
+            }
+            const textRow = await prisma.message.create({
+                data: {
+                    type: "text",
+                    body: reply.text,
+                    direction: "OUTGOING",
+                    status: "PENDING",
+                    contactId: dbContact.id
+                }
+            });
+            outgoingRecords.push({ kind: "TEXT", messageId: textRow.id });
+        } else if (reply.type === "MEDIA") {
+            const row = await prisma.message.create({
+                data: {
+                    type: reply.type,
+                    body: reply.text,
+                    direction: "OUTGOING",
+                    status: "PENDING",
+                    contactId: dbContact.id,
+                }
+            })
+            outgoingRecords.push({ kind: "MEDIA", messageId: row.id, media: reply.media })
+        }
+        else {
+            const row = await prisma.message.create({
+                data: {
+                    type: "text",
+                    body: reply.text,
+                    direction: "OUTGOING",
+                    status: "PENDING",
+                    contactId: dbContact.id
+                }
+            });
+            outgoingRecords.push({ kind: "TEXT", messageId: row.id });
+        }
 
         await responseQueue.add(
             "send-message",
@@ -80,7 +119,7 @@ export const processIncomingMessage = async (job) => {
                 to: message.from,
                 response: reply,
                 contactId: dbContact.id,
-                messageId: outgoingMessage.id
+                outgoingRecords
             },
             {
                 delay: delay * 1000
