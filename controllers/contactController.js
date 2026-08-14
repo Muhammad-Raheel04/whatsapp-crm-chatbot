@@ -62,15 +62,15 @@ export const getContactChatHistoryByContactId = async (req, res) => {
                 contactId: Number(contactId),
             },
             orderBy: {
-                createdAt: "asc",
+                createdAt: "desc",
             },
-            take: 10
+            take: 20
         })
 
         return res.status(200).json({
             success: true,
             message: "Successfully fetched chat history",
-            chatHistory,
+            chatHistory:chatHistory.reverse(),
         })
     } catch (error) {
         return res.status(500).json({
