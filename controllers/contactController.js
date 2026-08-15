@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js"
+import { toPublicMediaUrl } from "../utils/mediaUrl.js";
 
 export const getAllContacts = async (req, res) => {
     try {
@@ -70,7 +71,10 @@ export const getContactChatHistoryByContactId = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Successfully fetched chat history",
-            chatHistory:chatHistory.reverse(),
+            chatHistory: chatHistory.reverse().map((msg) => ({
+                ...msg,
+                mediaUrl: msg.mediaUrl ? toPublicMediaUrl(msg.mediaUrl) : null,
+            }))
         })
     } catch (error) {
         return res.status(500).json({
