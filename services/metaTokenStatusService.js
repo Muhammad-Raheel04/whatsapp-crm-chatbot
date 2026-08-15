@@ -16,7 +16,15 @@ export const getMetaTokenStatus = async () => {
     } catch (error) {
         const errorData = error.response?.data?.error;
         const isAuthError = errorData?.code === 190 || errorData?.type === "OAuthException";
+        const isRateLimited = [4, 17, 32, 613].includes(errorData?.code);
 
+        if (isRateLimited) {
+            return {
+                valid: false, // token itself is fine
+                message: "Meta API rate limit reached. Try again shortly.",
+                rateLimited: true
+            };
+        }
         return {
             valid: !isAuthError,
             message: isAuthError
