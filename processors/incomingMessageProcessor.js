@@ -69,8 +69,9 @@ export const processIncomingMessage = async (job) => {
             for (const media of reply.media) {
                 const row = await prisma.message.create({
                     data: {
-                        type: reply.type,
+                        type: media.type,
                         body: reply.text,
+                        mediaUrl: media.filePath,
                         direction: "OUTGOING",
                         status: "PENDING",
                         contactId: dbContact.id
@@ -89,17 +90,41 @@ export const processIncomingMessage = async (job) => {
             });
             outgoingRecords.push({ kind: "TEXT", messageId: textRow.id });
         } else if (reply.type === "MEDIA") {
-            const row = await prisma.message.create({
+            for (const media of reply.media) {
+                const row = await prisma.message.create({
+                    data: {
+                        type: media.type,
+                        body: reply.text,
+                        mediaUrl: media.filePath,
+                        direction: "OUTGOING",
+                        status: "PENDING",
+                        contactId: dbContact.id,
+                    },
+                });
+
+                outgoingRecords.push({
+                    kind: "MEDIA",
+                    messageId: row.id,
+                    media,
+                });
+            }
+
+            const textRow = await prisma.message.create({
                 data: {
-                    type: reply.type,
+                    type: "text",
                     body: reply.text,
                     direction: "OUTGOING",
                     status: "PENDING",
                     contactId: dbContact.id,
-                }
-            })
-            outgoingRecords.push({ kind: "MEDIA", messageId: row.id, media: reply.media })
+                },
+            });
+
+            outgoingRecords.push({
+                kind: "TEXT",
+                messageId: textRow.id,
+            });
         }
+        
         else {
             const row = await prisma.message.create({
                 data: {
