@@ -75,6 +75,7 @@ model Message {
   type     String
   body     String?
   mimeType String?
+  mediaUrl String?
 
   direction MessageDirection
   status    MessageStatus    @default(RECEIVED)
