@@ -4,7 +4,7 @@ import { getBotMode } from "../services/botModeService.js";
 import { getDelay } from "../services/delayService.js";
 import { generateReply } from "../services/messageProcessor.js";
 import { sendWhatsAppMessage } from "../services/whatsAppService.js";
-
+import { getMetaTokenStatus } from "../services/metaTokenStatusService.js";
 
 export const processIncomingMessage = async (job) => {
     try {
@@ -52,6 +52,13 @@ export const processIncomingMessage = async (job) => {
             }
 
         });
+
+        const tokenStatus = await getMetaTokenStatus();
+
+        if (!tokenStatus.valid) {
+            console.log("Meta token expired or invalid, skipping reply generation");
+            return;
+        }
 
         const botEnabled = await getBotMode(dbContact.id);
 
