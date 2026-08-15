@@ -25,6 +25,7 @@ export const sendWhatsAppMessage = async ({ to, message }) => {
         return response.data;
     } catch (error) {
         console.error("Graph Api Error", error.response?.data ?? error.message)
+        throw error;
     }
 
 }
@@ -51,7 +52,7 @@ export const sendWhatsAppMedia = async ({ to, media }) => {
                 messaging_product: "whatsapp",
                 to,
                 type: media.type,
-                [media.type]:mediaData
+                [media.type]: mediaData
             },
             {
                 headers: {
