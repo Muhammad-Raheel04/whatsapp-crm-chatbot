@@ -89,6 +89,7 @@ const responseWorker = new Worker(
                 } catch (err) {
                     console.error(`Media send failed for message ${record.messageId}:`, err.response?.data || err.message);
                     await markFailed(record.messageId);
+                    throw err;
                 }
             }
 
