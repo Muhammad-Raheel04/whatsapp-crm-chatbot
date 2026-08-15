@@ -1,6 +1,17 @@
 import OpenAI from "openai";
+import { getGrokApiKey } from "../services/grokApiKeyService.js";
 
-export const openai = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1"
-})
+let openai;
+
+const setGrokApiKey = async () => {
+    const grokApiKey = await getGrokApiKey();
+
+    openai = new OpenAI({
+        apiKey: grokApiKey,
+        baseURL: "https://api.groq.com/openai/v1",
+    });
+};
+
+await setGrokApiKey();
+
+export { openai };
