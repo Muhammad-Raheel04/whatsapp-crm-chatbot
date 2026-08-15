@@ -70,7 +70,6 @@ export const processIncomingMessage = async (job) => {
                 const row = await prisma.message.create({
                     data: {
                         type: media.type,
-                        body: reply.text,
                         mediaUrl: media.filePath,
                         direction: "OUTGOING",
                         status: "PENDING",
@@ -94,7 +93,6 @@ export const processIncomingMessage = async (job) => {
                 const row = await prisma.message.create({
                     data: {
                         type: media.type,
-                        body: reply.text,
                         mediaUrl: media.filePath,
                         direction: "OUTGOING",
                         status: "PENDING",
@@ -124,7 +122,7 @@ export const processIncomingMessage = async (job) => {
                 messageId: textRow.id,
             });
         }
-        
+
         else {
             const row = await prisma.message.create({
                 data: {
