@@ -4,72 +4,71 @@ import { getBotMode } from "../services/botModeService.js";
 import { getDelay } from "../services/delayService.js";
 import { generateReply } from "../services/messageProcessor.js";
 import { sendWhatsAppMessage } from "../services/whatsAppService.js";
-import { getMetaTokenStatus } from "../services/metaTokenStatusService.js";
+import { getMetaTokenStatus, isTokenUnavailableError } from "../services/metaTokenStatusService.js";
+import { handleTokenFailure } from "../services/tokenRecoveryWatcher.js";
+import { TokenUnavailableError } from "../errors/TokenUnavailableError.js";
 
 export const processIncomingMessage = async (job) => {
+    const { message, contact } = job.data;
+
+    const tokenStatus = await getMetaTokenStatus();
+    if (!tokenStatus.valid) {
+        await handleTokenFailure();
+        throw new TokenUnavailableError(tokenStatus.message);
+    }
+
+    const dbContact = await prisma.contact.upsert({
+        where: {
+            waId: contact.wa_id
+        },
+        update: {
+            name: contact.profile?.name
+        },
+        create: {
+            waId: contact.wa_id,
+            name: contact.profile?.name
+        }
+    });
+
+    const existingMessage = await prisma.message.findUnique({
+        where: {
+            waMessageId: message.id
+        }
+    });
+
+    if (existingMessage) {
+        console.log("message exist");
+        return;
+    }
+
+    let body = null;
+    if (message.type === "text") {
+        body = message.text.body;
+    }
+
+    const botEnabled = await getBotMode(dbContact.id);
+
+    const incomingStatus = botEnabled ? "PROCESSED" : "RECEIVED";
+
+    await prisma.message.create({
+        data: {
+            waMessageId: message.id,
+            type: message.type,
+            body,
+            direction: "INCOMING",
+            status: incomingStatus,
+            contactId: dbContact.id
+        }
+    });
+
+    if (!botEnabled) {
+        console.log("Bot disabled. Reply Manually (incoming saved as RECEIVED).");
+        return;
+    }
+
     try {
-        const { message, contact } = job.data;
-        const dbContact = await prisma.contact.upsert({
-            where: {
-                waId: contact.wa_id
-            },
-            update: {
-                name: contact.profile?.name
-            },
-            create: {
-                waId: contact.wa_id,
-                name: contact.profile?.name
-            }
-        });
-        const existingMessage = await prisma.message.findUnique({
-
-            where: {
-                waMessageId: message.id
-            }
-
-        });
-
-        if (existingMessage) {
-            console.log("message exist")
-            return;
-        }
-
-
-        let body = null;
-
-        if (message.type === "text") {
-            body = message.text.body;
-        }
-
-        await prisma.message.create({
-            data: {
-                waMessageId: message.id,
-                type: message.type,
-                body,
-                direction: "INCOMING",
-                status: "PROCESSED",
-                contactId: dbContact.id
-            }
-
-        });
-
-        const tokenStatus = await getMetaTokenStatus();
-
-        if (!tokenStatus.valid) {
-            console.log("Meta token expired or invalid, skipping reply generation");
-            return;
-        }
-
-        const botEnabled = await getBotMode(dbContact.id);
-
-        if (!botEnabled) {
-            console.log("Bot disabled. Reply Manually");
-            return;
-        }
         const reply = await generateReply(body, dbContact);
-
         const delay = await getDelay();
-
         const outgoingRecords = [];
 
         if (reply.type === 'PRODUCT') {
@@ -82,8 +81,8 @@ export const processIncomingMessage = async (job) => {
                         status: "PENDING",
                         contactId: dbContact.id
                     }
-                })
-                outgoingRecords.push({ kind: "MEDIA", messageId: row.id, media })
+                });
+                outgoingRecords.push({ kind: "MEDIA", messageId: row.id, media });
             }
             const textRow = await prisma.message.create({
                 data: {
@@ -106,14 +105,12 @@ export const processIncomingMessage = async (job) => {
                         contactId: dbContact.id,
                     },
                 });
-
                 outgoingRecords.push({
                     kind: "MEDIA",
                     messageId: row.id,
                     media,
                 });
             }
-
             const textRow = await prisma.message.create({
                 data: {
                     type: "text",
@@ -123,14 +120,11 @@ export const processIncomingMessage = async (job) => {
                     contactId: dbContact.id,
                 },
             });
-
             outgoingRecords.push({
                 kind: "TEXT",
                 messageId: textRow.id,
             });
-        }
-
-        else {
+        } else {
             const row = await prisma.message.create({
                 data: {
                     type: "text",
@@ -154,9 +148,12 @@ export const processIncomingMessage = async (job) => {
             {
                 delay: delay * 1000
             }
-        )
-
+        );
     } catch (error) {
-        console.error("Incoming message processing failed", error.message)
+        if (isTokenUnavailableError(error)) {
+            await handleTokenFailure();
+            throw new TokenUnavailableError(error.message);
+        }
+        throw error;
     }
 };
