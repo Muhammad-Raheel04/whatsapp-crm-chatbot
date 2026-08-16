@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { processAwaitingRepliesAfterAiEnabled } from "../services/processAwaitingRepliesService.js";
 
 export const setDelay = async (req, res) => {
     try {
@@ -200,6 +201,21 @@ export const togggleGlobalAIMode = async (req, res) => {
                 aiEnabled: value,
             }
         })
+
+        if (value) {
+            Promise.resolve()
+                .then(() => processAwaitingRepliesAfterAiEnabled())
+                .then((stats) => {
+                    if (stats && (stats.queued > 0 || stats.processed > 0)) {
+                        console.log(`AI re-enabled: resolved ${stats.processed} pending incoming message(s), queued ${stats.queued} AI reply job(s).`);
+                    } else {
+                        console.log("AI re-enabled: no pending incoming messages were awaiting a reply.");
+                    }
+                })
+                .catch((err) => {
+                    console.error("AI re-enabled: failed to process awaiting replies in background:", err.message);
+                });
+        }
 
         return res.status(200).json({
             success: true,
