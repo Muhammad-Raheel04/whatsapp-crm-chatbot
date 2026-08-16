@@ -3,11 +3,22 @@ import { sendWhatsAppMedia, sendWhatsAppMessage } from "../services/whatsAppServ
 import redisConnection from "../config/redis.js";
 import { prisma } from "../config/prisma.js";
 import { toPublicMediaUrl } from "../utils/mediaUrl.js";
+import { getMetaTokenStatus, isTokenUnavailableError } from "../services/metaTokenStatusService.js";
+import { handleTokenFailure } from "../services/tokenRecoveryWatcher.js";
+import { TokenUnavailableError } from "../errors/TokenUnavailableError.js";
+
+const isTokenFailure = (err) => isTokenUnavailableError(err);
 
 const responseWorker = new Worker(
     "whatsapp-response",
     async (job) => {
         const { to, response, outgoingRecords: rawOutgoingRecords, messageId } = job.data;
+
+        const tokenStatus = await getMetaTokenStatus();
+        if (!tokenStatus.valid) {
+            await handleTokenFailure();
+            throw new TokenUnavailableError(tokenStatus.message);
+        }
 
         let outgoingRecords = rawOutgoingRecords;
 
@@ -20,6 +31,19 @@ const responseWorker = new Worker(
                 outgoingRecords = [];
             }
         }
+
+        const maxAttempts = job.opts?.attempts ?? job.queue?.defaultJobOptions?.attempts ?? 100;
+        const isLastAttempt = (job.attemptsMade + 1) >= maxAttempts;
+
+        const isAlreadySent = async (recordMessageId) => {
+            if (!recordMessageId) return false;
+            const row = await prisma.message.findUnique({
+                where: { id: recordMessageId },
+                select: { status: true, waMessageId: true }
+            }).catch(() => null);
+            if (!row) return false;
+            return ["SENT", "DELIVERED", "READ"].includes(row.status) && !!row.waMessageId;
+        };
 
         const updateRecord = async (recordMessageId, result) => {
             if (!result?.messages?.[0]?.id) return;
@@ -35,10 +59,29 @@ const responseWorker = new Worker(
         };
 
         const markFailed = async (recordMessageId) => {
+            if (!isLastAttempt) return;
             await prisma.message.update({
                 where: { id: recordMessageId },
                 data: { status: "FAILED" }
             }).catch(() => {});
+        };
+
+        const wrapSend = async (recordMessageId, sendFn) => {
+            if (recordMessageId && await isAlreadySent(recordMessageId)) {
+                console.log(`Skipping resend for message ${recordMessageId} — already SENT/DELIVERED/READ.`);
+                return null;
+            }
+            try {
+                return await sendFn();
+            } catch (err) {
+                if (isTokenFailure(err)) {
+                    await handleTokenFailure();
+                    const wrapped = new TokenUnavailableError(err.message || "Meta token unavailable mid-send.");
+                    wrapped.cause = err;
+                    throw wrapped;
+                }
+                throw err;
+            }
         };
 
         if (response.type === "TEXT") {
@@ -47,8 +90,17 @@ const responseWorker = new Worker(
                 console.error(`No outgoing record found for TEXT message to ${to}.`);
                 return;
             }
-            const result = await sendWhatsAppMessage({ to, message: response.text });
-            await updateRecord(record.messageId, result);
+            try {
+                const result = await wrapSend(record.messageId, () =>
+                    sendWhatsAppMessage({ to, message: response.text })
+                );
+                if (result) await updateRecord(record.messageId, result);
+            } catch (err) {
+                if (!isTokenFailure(err)) {
+                    await markFailed(record.messageId);
+                }
+                throw err;
+            }
 
         } else if (response.type === "MEDIA") {
             const record = outgoingRecords[0];
@@ -58,17 +110,21 @@ const responseWorker = new Worker(
             }
             const media = record.media || response.media;
             try {
-                const result = await sendWhatsAppMedia({
-                    to,
-                    media: {
-                        type: media.type.toLowerCase(),
-                        filePath: toPublicMediaUrl(media.filePath),
-                        caption: media.caption || undefined,
-                    }
-                });
-                await updateRecord(record.messageId, result);
+                const result = await wrapSend(record.messageId, () =>
+                    sendWhatsAppMedia({
+                        to,
+                        media: {
+                            type: media.type.toLowerCase(),
+                            filePath: toPublicMediaUrl(media.filePath),
+                            caption: media.caption || undefined,
+                        }
+                    })
+                );
+                if (result) await updateRecord(record.messageId, result);
             } catch (err) {
-                await markFailed(record.messageId);
+                if (!isTokenFailure(err)) {
+                    await markFailed(record.messageId);
+                }
                 throw err;
             }
 
@@ -78,24 +134,38 @@ const responseWorker = new Worker(
 
             for (const record of mediaRecords) {
                 try {
-                    const result = await sendWhatsAppMedia({
-                        to,
-                        media: {
-                            type: record.media.type.toLowerCase(),
-                            filePath: toPublicMediaUrl(record.media.filePath)
-                        }
-                    });
-                    await updateRecord(record.messageId, result);
+                    const result = await wrapSend(record.messageId, () =>
+                        sendWhatsAppMedia({
+                            to,
+                            media: {
+                                type: record.media.type.toLowerCase(),
+                                filePath: toPublicMediaUrl(record.media.filePath)
+                            }
+                        })
+                    );
+                    if (result) await updateRecord(record.messageId, result);
                 } catch (err) {
                     console.error(`Media send failed for message ${record.messageId}:`, err.response?.data || err.message);
-                    await markFailed(record.messageId);
-                    throw err;
+                    if (!isTokenFailure(err)) {
+                        await markFailed(record.messageId);
+                    } else {
+                        throw err;
+                    }
                 }
             }
 
             if (textRecord) {
-                const textResult = await sendWhatsAppMessage({ to, message: response.text });
-                await updateRecord(textRecord.messageId, textResult);
+                try {
+                    const textResult = await wrapSend(textRecord.messageId, () =>
+                        sendWhatsAppMessage({ to, message: response.text })
+                    );
+                    if (textResult) await updateRecord(textRecord.messageId, textResult);
+                } catch (err) {
+                    if (!isTokenFailure(err)) {
+                        await markFailed(textRecord.messageId);
+                    }
+                    throw err;
+                }
             }
         }
     },
