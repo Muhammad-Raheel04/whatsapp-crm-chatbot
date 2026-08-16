@@ -6,10 +6,10 @@ export const responseQueue = new Queue(
     {
         connection: redisConnection,
         defaultJobOptions: {
-            attempts: 3,
-            backoff: { type: "exponential", delay: 5000 },
+            attempts: 100,
+            backoff: { type: "exponential", delay: 60000 },
             removeOnComplete: 1000,
-            removeOnFail: 5000,
+            removeOnFail: false,
         }
     }
 )
