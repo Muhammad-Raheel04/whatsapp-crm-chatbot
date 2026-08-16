@@ -2,6 +2,28 @@ import { prisma } from "../config/prisma.js";
 import { responseQueue } from "../queues/responseQueue.js";
 import { resolveMediaType } from "../utils/resolveMediaType.js";
 
+const resolvePendingIncomingForContact = async (contactId) => {
+    try {
+        const { count } = await prisma.message.updateMany({
+            where: {
+                contactId: Number(contactId),
+                direction: "INCOMING",
+                status: "RECEIVED",
+            },
+            data: {
+                status: "PROCESSED",
+            },
+        });
+        if (count > 0) {
+            console.log(`Marked ${count} incoming RECEIVED message(s) as PROCESSED for contact ${contactId}.`);
+        }
+        return count;
+    } catch (err) {
+        console.error(`Failed to resolve pending incoming messages for contact ${contactId}:`, err.message);
+        return 0;
+    }
+};
+
 export const sendTextMessage = async (req, res) => {
     try {
         const { contactId } = req.params;
@@ -33,6 +55,8 @@ export const sendTextMessage = async (req, res) => {
                 message: "Contact not found"
             });
         }
+
+        await resolvePendingIncomingForContact(contact.id);
 
         const outgoingMessage = await prisma.message.create({
             data: {
@@ -104,6 +128,8 @@ export const sendAttachment = async (req, res) => {
                 message: "Contact not found"
             });
         }
+
+        await resolvePendingIncomingForContact(contact.id);
 
         const messageIds = [];
 
