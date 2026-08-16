@@ -10,6 +10,7 @@ const PORT = process.env.PORT;
 import webhookRoutes from './routes/webhookRoutes.js';
 import './workers/whatsAppWorker.js'
 import './workers/responseWorker.js';
+import './services/tokenRecoveryWatcher.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
