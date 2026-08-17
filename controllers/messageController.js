@@ -142,6 +142,7 @@ export const sendAttachment = async (req, res) => {
                 data: {
                     type: mediaType.toLowerCase(),
                     body: caption,
+                    mediaUrl: relativePath,
                     direction: "OUTGOING",
                     status: "PENDING",
                     contactId: contact.id,
