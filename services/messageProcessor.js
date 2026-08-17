@@ -1,4 +1,4 @@
-import { openai } from "../config/openai.js";
+import { getOpenAIClient } from "../config/openai.js";
 import { prisma } from "../config/prisma.js";
 import { findProductbyKeyword } from "./findProductByKeywordService.js";
 import { getSystemPrompt } from "./systemPromptService.js";
@@ -54,8 +54,9 @@ export const generateReply = async (text, dbContact) => {
             hasSystemPrompt: !!systemPrompt,
         });
 
+        const openai = await getOpenAIClient();
         if (!openai) {
-            console.error("[messageProcessor] openai client is null before Groq request", {
+            console.error("[messageProcessor] openai client unavailable before Groq request", {
                 contactId: dbContact?.id,
             });
             throw new Error("OpenAI client is not initialized");
@@ -64,7 +65,7 @@ export const generateReply = async (text, dbContact) => {
         console.log("[messageProcessor] sending Groq/OpenAI completion request", {
             contactId: dbContact?.id,
             messageCount: previousMessages?.length ?? 0,
-            model:process.env.OPEN_AI_MODEL,
+            model: process.env.OPEN_AI_MODEL,
         });
 
         const response = await openai.chat.completions.create({
@@ -115,6 +116,12 @@ const enhanceProductDescription = async (customerMessage, product) => {
         console.log("[messageProcessor] enhancing product description reply", {
             productId: product?.id,
         });
+
+        const openai = await getOpenAIClient();
+        if (!openai) {
+            throw new Error("OpenAI client is not initialized");
+        }
+        
         const response = await openai.chat.completions.create({
             model: process.env.OPEN_AI_MODEL,
             messages: [
