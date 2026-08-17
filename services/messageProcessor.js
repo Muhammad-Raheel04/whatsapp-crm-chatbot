@@ -68,7 +68,7 @@ export const generateReply = async (text, dbContact) => {
         });
 
         const response = await openai.chat.completions.create({
-            model: "openai/gpt-oss-120b",
+            model: process.env.OPEN_AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -116,7 +116,7 @@ const enhanceProductDescription = async (customerMessage, product) => {
             productId: product?.id,
         });
         const response = await openai.chat.completions.create({
-            model: "openai/gpt-oss-120b",
+            model: process.env.OPEN_AI_MODEL,
             messages: [
                 {
                     role: "system",
