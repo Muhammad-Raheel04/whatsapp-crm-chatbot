@@ -38,11 +38,12 @@ export const handleWhatsAppWebhook = async (req, res) => {
 
                 if (value.messages) {
                     for (const message of value.messages) {
-                        console.log("adding job to queue", {
-                            id: message.id,
-                            from: message.from,
-                            text: message.text.body,
-                        })
+                        console.log("[webhook] queueing incoming message", {
+                            messageId: message?.id,
+                            from: message?.from,
+                            type: message?.type,
+                            contactWaId: value.contacts?.[0]?.wa_id,
+                        });
                         await whatsappQueue.add("incoming-message", {
                             message,
                             contact: value.contacts?.[0],
