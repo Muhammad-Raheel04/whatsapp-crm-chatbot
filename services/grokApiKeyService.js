@@ -1,11 +1,30 @@
 import { prisma } from "../config/prisma.js"
 
 export const getGrokApiKey = async () => {
-    const settings = await prisma.settings.findUnique({
-        where: {
-            id: 1,
-        }
-    })
+    console.log("[grokApiKeyService] fetching Groq/OpenAI key from DB");
 
-    return settings?.groqApiKey;
+    try {
+        const settings = await prisma.settings.findUnique({
+            where: {
+                id: 1,
+            }
+        })
+
+        const hasGroqApiKey = !!settings?.groqApiKey;
+        const hasGroqOpenAiKey = !!settings?.groqOpenAiKey;
+
+        console.log("[grokApiKeyService] DB settings lookup result", {
+            hasSettings: !!settings,
+            hasGroqApiKey,
+            hasGroqOpenAiKey,
+        });
+
+        return settings?.groqApiKey || settings?.groqOpenAiKey || null;
+    } catch (error) {
+        console.error("[grokApiKeyService] failed reading Groq/OpenAI key from DB", {
+            message: error?.message,
+            stack: error?.stack,
+        });
+        return null;
+    }
 } 
