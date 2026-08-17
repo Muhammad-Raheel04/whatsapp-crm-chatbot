@@ -64,7 +64,7 @@ export const generateReply = async (text, dbContact) => {
         console.log("[messageProcessor] sending Groq/OpenAI completion request", {
             contactId: dbContact?.id,
             messageCount: previousMessages?.length ?? 0,
-            model: "openai/gpt-oss-120b",
+            model:process.env.OPEN_AI_MODEL,
         });
 
         const response = await openai.chat.completions.create({

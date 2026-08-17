@@ -19,7 +19,7 @@ export const getGrokApiKey = async () => {
             hasGroqOpenAiKey,
         });
 
-        return settings?.groqApiKey || settings?.groqOpenAiKey || null;
+        return settings?.groqApiKey;
     } catch (error) {
         console.error("[grokApiKeyService] failed reading Groq/OpenAI key from DB", {
             message: error?.message,
