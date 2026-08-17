@@ -6,7 +6,7 @@ let initPromise = null;
 
 const initClient = async () => {
     console.log("[openai:init] starting client initialization");
-    const grokApiKey = await getGrokApiKey();
+    const grokApiKey = process.env.GROQ_API_KEY;
 
     console.log("[openai:init] API key resolved from config source:", grokApiKey ? "present" : "missing");
 
@@ -16,7 +16,7 @@ const initClient = async () => {
     }
 
     const client = new OpenAI({
-        apiKey: grokApiKey,
+        apiKey: process.env.GROQ_API_KEY,
         baseURL: "https://api.groq.com/openai/v1",
     });
 
