@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
 
             cb(null, `uploads/${category}/${productId}`);
         } catch (err) {
-            cb(err.message)
+            cb(err)
         }
     },
     filename: (req, file, cb) => {
