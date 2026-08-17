@@ -4,7 +4,8 @@
   "description": "Minimal WhatsApp Cloud API webhook receiver + sender",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "postinstall": "prisma generate",
+    "start": "node server.js"
   },
   "type": "module",
   "dependencies": {
