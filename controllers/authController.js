@@ -1,6 +1,11 @@
 import { prisma } from '../config/prisma.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import validtor from 'validator';
+import { generateOtp } from '../utils/generateOtp.js';
+import redisConnection from '../config/redis.js';
+import { OTP_TTL_SECONDS } from '../constants/otpConstant.js';
+import { sendOtpEmail } from '../services/mailService.js';
 
 export const register = async (req, res) => {
     try {
@@ -265,5 +270,47 @@ export const updatePassword = async (req, res) => {
             message: 'Internal Server Error',
             error: error.message,
         });
+    }
+}
+
+export const forgotPasword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || !validtor.isEmail(email)) {
+            return res.status(400).json({
+                success: false,
+                message: "Valid email is required",
+            })
+        }
+
+        const user = await prisma.users.findUnique({
+            where: {
+                email: email.trim()
+            }
+        })
+
+        if (!user) {
+            return res.status(200).json({
+                success: false,
+                message: "OTP has been sent to this email"
+            })
+        }
+
+        const otp = generateOtp();
+        await redisConnection.set(`otp:${email}`, otp, 'EX', OTP_TTL_SECONDS);
+
+        await sendOtpEmail(user.name, email, otp);
+
+        return res.status(200).json({
+            success: true,
+            message: "OTP has been sent",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        })
     }
 }
