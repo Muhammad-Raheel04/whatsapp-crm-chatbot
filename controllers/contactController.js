@@ -3,7 +3,20 @@ import { toPublicMediaUrl } from "../utils/mediaUrl.js";
 
 export const getAllContacts = async (req, res) => {
     try {
-        const contacts = await prisma.contact.findMany();
+        const contacts = await prisma.contact.findMany({
+            include: {
+                groups: {
+                    include: {
+                        group: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         return res.status(200).json({
             success: true,
