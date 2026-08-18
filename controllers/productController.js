@@ -431,3 +431,57 @@ export const getProductMedia = async (req, res) => {
         });
     }
 }
+
+export const deleteProductMedia = async (req, res) => {
+    try {
+        const { productMediaIds } = req.body;
+        const { productId } = req.params;
+
+        if (!productId || !productMediaIds) {
+            return res.status(400).json({
+                success: false,
+                message: "Required fields are missing",
+            })
+        }
+
+        if (!Array.isArray(productMediaIds) || productMediaIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "productMediaIds must be a non-empty array",
+            })
+        }
+
+        const exisitingProduct = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!exisitingProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        await prisma.productMedia.deleteMany({
+            where: {
+                productId: Number(productId),
+                id: {
+                    in: productMediaIds.map(Number)
+                }
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Media deleted successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
