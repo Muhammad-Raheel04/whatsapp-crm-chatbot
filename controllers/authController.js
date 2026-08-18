@@ -314,3 +314,38 @@ export const forgotPasword = async (req, res) => {
         })
     }
 }
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters",
+            })
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.users.update({
+            where: {
+                email,
+            },
+            data: {
+                password: hashedPassword,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Password reset successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        })
+    }
+}
