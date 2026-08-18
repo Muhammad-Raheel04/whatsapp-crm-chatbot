@@ -247,6 +247,60 @@ export const addKeywords = async (req, res) => {
     }
 }
 
+export const deleteProductKeywords = async (req, res) => {
+    try {
+        const { keywordIds } = req.body;
+        const { productId } = req.params;
+
+        if (!productId || !keywordIds) {
+            return res.status(400).json({
+                success: false,
+                message: "Required fields are missing",
+            })
+        }
+
+        if (!Array.isArray(keywordIds) || keywordIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "KeywordIds must be a non-empty array",
+            })
+        }
+
+        const exisitingProduct = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!exisitingProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product doesn't exist",
+            })
+        }
+
+        await prisma.productKeyword.deleteMany({
+            where: {
+                productId: Number(productId),
+                id: {
+                    in: keywordIds.map(Number)
+                }
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Keywords deleted successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 export const getProductKeywords = async (req, res) => {
     try {
         const { productId } = req.params;
