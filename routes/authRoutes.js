@@ -1,6 +1,7 @@
 import express from "express";
-import { forgotPasword, login, logout, refresh, register, updatePassword } from "../controllers/authController.js";
+import { forgotPasword, login, logout, refresh, register, resetPassword, updatePassword } from "../controllers/authController.js";
 import { isAuthenticated } from "../middlewares/isAuthenticated.js";
+import { validateOTP } from "../middlewares/otpValidator.js";
 const router = express.Router();
 
 router.post('/register', register);
@@ -10,4 +11,6 @@ router.post('/refresh', refresh);
 
 router.patch("/update-password/:email", updatePassword);
 router.post("/forgot-password", forgotPasword);
+router.post("/reset-password", validateOTP, resetPassword);
+
 export default router;
