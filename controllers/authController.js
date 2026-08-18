@@ -201,3 +201,69 @@ export const refresh = async (req, res) => {
         });
     }
 };
+
+export const updatePassword = async (req, res) => {
+    try {
+        const { newPassword, confirmPassword } = req.body;
+        const { email } = req.params;
+
+        if (!newPassword || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Both passwords fields are required",
+            })
+        }
+
+        if (newPassword.trim() !== confirmPassword.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Passwords don't match",
+            })
+        }
+
+        const user = await prisma.users.findUnique({
+            where: {
+                email: email.trim()
+            },
+            select: {
+                password: true,
+            }
+        })
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User doesn't exist",
+            })
+        }
+
+        if (user.password === newPassword.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "New password might not match with old one."
+            })
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword.trim(), 10);
+
+        await prisma.users.update({
+            where: {
+                email: email.trim(),
+            },
+            data: {
+                password: hashedPassword,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message,
+        });
+    }
+}
