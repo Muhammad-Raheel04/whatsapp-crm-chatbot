@@ -485,3 +485,50 @@ export const deleteProductMedia = async (req, res) => {
         });
     }
 }
+
+export const updateProductDescription = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { productDescription } = req.body;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: "Product Id is missing",
+            })
+        }
+
+        const product = await prisma.product.findUnique({
+            where: {
+                id: Number(productId)
+            }
+        })
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found",
+            })
+        }
+
+        await prisma.product.update({
+            where: {
+                id: Number(productId),
+            },
+            data: {
+                description: productDescription.trim()
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Product description updated successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
