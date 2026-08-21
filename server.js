@@ -50,4 +50,5 @@ app.use("/api/v1/meta", metaRoutes);
 
 app.listen(PORT, () => {
   console.log(`visit http://localhost:${PORT}`);
+  reconcileQueueState();
 })
