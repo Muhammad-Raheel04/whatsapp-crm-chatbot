@@ -8,13 +8,12 @@ let _isPaused = false;
 let _pollTimer = null;
 
 const _pauseAll = async () => {
-    if (_isPaused) return;
-    _isPaused = true;
     try {
         await Promise.all([
             whatsappQueue.pause().catch(() => {}),
             responseQueue.pause().catch(() => {}),
         ]);
+        _isPaused = true;
         console.log("[tokenRecoveryWatcher] Both queues PAUSED due to token unavailability.");
     } catch (err) {
         console.error("[tokenRecoveryWatcher] Failed to pause queues:", err.message);
@@ -22,7 +21,6 @@ const _pauseAll = async () => {
 };
 
 const _resumeAll = async () => {
-    if (!_isPaused) return;
     try {
         await Promise.all([
             whatsappQueue.resume().catch(() => {}),
