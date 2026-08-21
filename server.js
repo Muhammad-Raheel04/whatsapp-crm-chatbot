@@ -21,6 +21,7 @@ import groupRoutes from './routes/groupRoutes.js';
 import replyRoutes from './routes/messageRoutes.js';
 import broadcastRoutes from './routes/broadcastRoutes.js';
 import metaRoutes from './routes/metaRoutes.js';
+import reconcileQueueState from './services/queueReconciliationService.js';
 
 const app = express();
 app.use(express.json());
